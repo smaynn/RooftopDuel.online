@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+<!DOCTYPE html>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rooftop Duel - Ragdoll Physics Shooter Game | rooftopduel.online</title>
@@ -51,9 +53,13 @@
             height: 0;
             padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
             overflow: hidden;
+            background-color: #000;
         }
         
-        .game-container iframe {
+        .game-container iframe,
+        .game-container object,
+        .game-container embed,
+        .safari-container {
             position: absolute;
             top: 0;
             left: 0;
@@ -62,10 +68,127 @@
             border: none;
         }
         
+        /* Loading indicator */
+        .game-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            text-align: center;
+            z-index: 5;
+        }
+        
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #007AFF;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        /* Safari container */
+        .safari-container {
+            z-index: 1;
+            display: none; /* Hidden by default, shown for Safari */
+            overflow: hidden;
+            background-color: #000;
+        }
+        
+        /* Game controls overlay */
+        .game-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            z-index: 4;
+        }
+        
+        .game-controls button {
+            margin: 0 5px;
+            padding: 8px 16px;
+            background-color: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
         @media (max-width: 640px) {
             .game-container {
                 padding-bottom: 75%; /* Adjust aspect ratio for mobile */
             }
+        }
+
+        /* Safari-specific help message */
+        .safari-helper {
+            position: absolute;
+            top: 10px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            z-index: 6;
+            display: none;
+        }
+        
+        .safari-helper .message {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        /* Mayin dot pattern styles */
+        .mayin-pattern {
+            position: relative;
+            overflow: hidden;
+            padding-top: 40px;
+            padding-bottom: 20px;
+        }
+        
+        .mayin-pattern::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: radial-gradient(circle, rgba(0, 122, 255, 0.15) 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0.4;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        .mayin-text {
+            position: relative;
+            text-align: center;
+            font-weight: 300;
+            color: rgba(142, 142, 147, 0.7);
+            letter-spacing: 1px;
+            font-size: 14px;
+            margin-top: 20px;
+            z-index: 1;
         }
     </style>
 </head>
@@ -74,7 +197,7 @@
         <div class="container mx-auto max-w-6xl">
             <div class="flex flex-col md:flex-row justify-between items-center">
                 <div>
-                    <h1 class="text-3xl md:text-4xl font-bold tracking-tight">Rooftop Duel-马寅的一个游戏</h1>
+                    <h1 class="text-3xl md:text-4xl font-bold tracking-tight">Rooftop Duel</h1>
                     <p class="mt-2 text-lg md:text-xl font-light">Can you handle a rooftop shoot-out with gravity, ragdoll limbs, and a toybox of overpowered weapons?</p>
                 </div>
                 <nav class="mt-4 md:mt-0">
@@ -92,8 +215,48 @@
     <main class="container mx-auto max-w-6xl px-4 md:px-8 py-8">
         <section id="game" class="mb-12">
             <h2 class="text-2xl md:text-3xl font-bold mb-6 text-apple-blue dark:text-apple-teal">Play Rooftop Duel</h2>
-            <div class="game-container rounded-xl overflow-hidden shadow-xl">
-                <iframe src="https://cloud.onlinegames.io/games/2025/construct/213/rooftop-duel/index-og.html" allowfullscreen="" title="Rooftop Duel Game"></iframe>
+            <div class="game-container rounded-xl overflow-hidden shadow-xl relative">
+                <!-- Loading indicator -->
+                <div class="game-loading" id="gameLoading">
+                    <div class="loader"></div>
+                    <p>Loading game...</p>
+                </div>
+                
+                <!-- Safari helper message -->
+                <div class="safari-helper" id="safariHelper">
+                    <div class="message">
+                        Game loaded! Click or press any key to focus.
+                    </div>
+                </div>
+                
+                <!-- Standard iframe (for Chrome, Firefox, etc.) -->
+                <iframe 
+                    id="gameFrame" 
+                    src="https://cloud.onlinegames.io/games/2025/construct/213/rooftop-duel/index-og.html" 
+                    allowfullscreen="true"
+                    allow="fullscreen; autoplay; clipboard-write" 
+                    sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-downloads"
+                    frameborder="0"
+                    loading="eager"
+                    title="Rooftop Duel Game"
+                    style="display:none;">
+                </iframe>
+                
+                <!-- Safari-specific container -->
+                <div class="safari-container" id="safariContainer">
+                    <!-- Will be populated via JavaScript for Safari -->
+                </div>
+                
+                <!-- Game controls (mainly for Safari) -->
+                <div class="game-controls" id="gameControls">
+                    <button id="jumpBtn">Jump (W)</button>
+                    <button id="aimBtn">Aim (E)</button>
+                    <button id="shootBtn">Shoot</button>
+                    <button id="reloadBtn">Reload Game</button>
+                </div>
+            </div>
+            <div class="mt-2 p-2 bg-apple-gray-200 dark:bg-apple-gray-800 rounded-lg text-center text-sm">
+                <p id="gameHint">Press W to jump, hold E to aim, and release to shoot.</p>
             </div>
         </section>
 
@@ -200,7 +363,7 @@
         </section>
 
         <section id="tips" class="mb-12">
-            <h2 class="text-2xl md:text-3xl font-bold mb-6 text-apple-blue dark:text-apple-teal">Pro Tips &amp; Strategies</h2>
+            <h2 class="text-2xl md:text-3xl font-bold mb-6 text-apple-blue dark:text-apple-teal">Pro Tips & Strategies</h2>
             <div class="bg-white dark:bg-apple-gray-900 rounded-xl p-6 shadow-md">
                 <div class="space-y-6">
                     <div>
@@ -223,6 +386,14 @@
             </div>
         </section>
     </main>
+
+    <!-- Mayin pattern section before the footer -->
+    <div class="mayin-pattern">
+        <div class="container mx-auto max-w-6xl px-4 md:px-8 relative">
+            <canvas id="mayinCanvas" width="1000" height="120"></canvas>
+            <div class="mayin-text">Designed by Mayin</div>
+        </div>
+    </div>
 
     <footer class="bg-apple-gray-900 text-white py-10 px-4 md:px-8">
         <div class="container mx-auto max-w-6xl">
@@ -249,10 +420,338 @@
                 </div>
             </div>
             <div class="mt-10 pt-6 border-t border-apple-gray-800 text-center text-apple-gray-500">
-                <p>© 2025 rooftopduel.online. All rights reserved. Rooftop Duel is a trademark of its respective owner.</p>
+                <p>&copy; 2025 rooftopduel.online. All rights reserved. Rooftop Duel is a trademark of its respective owner.</p>
             </div>
         </div>
     </footer>
 
-
-</body></html>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const iframe = document.getElementById('gameFrame');
+            const loading = document.getElementById('gameLoading');
+            const safariContainer = document.getElementById('safariContainer');
+            const gameControls = document.getElementById('gameControls');
+            const gameHint = document.getElementById('gameHint');
+            const safariHelper = document.getElementById('safariHelper');
+            const jumpBtn = document.getElementById('jumpBtn');
+            const aimBtn = document.getElementById('aimBtn');
+            const shootBtn = document.getElementById('shootBtn');
+            const reloadBtn = document.getElementById('reloadBtn');
+            
+            // Game URL
+            const gameUrl = 'https://cloud.onlinegames.io/games/2025/construct/213/rooftop-duel/index-og.html';
+            
+            // Detect Safari browser
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            
+            // Safari-specific solutions
+            if (isSafari) {
+                // Hide standard iframe, show Safari container
+                iframe.style.display = 'none';
+                safariContainer.style.display = 'block';
+                
+                // Method 1: Try object tag
+                const objectEmbed = document.createElement('object');
+                objectEmbed.data = gameUrl;
+                objectEmbed.type = 'text/html';
+                objectEmbed.width = '100%';
+                objectEmbed.height = '100%';
+                objectEmbed.setAttribute('id', 'gameObject');
+                safariContainer.appendChild(objectEmbed);
+                
+                // Method 2: Backup with embed tag if object fails
+                setTimeout(function() {
+                    if (loading.style.display !== 'none') {
+                        safariContainer.innerHTML = ''; // Clear container
+                        
+                        const embedTag = document.createElement('embed');
+                        embedTag.src = gameUrl;
+                        embedTag.type = 'text/html';
+                        embedTag.width = '100%';
+                        embedTag.height = '100%';
+                        embedTag.setAttribute('id', 'gameEmbed');
+                        safariContainer.appendChild(embedTag);
+                        
+                        // Show game controls for Safari
+                        setTimeout(() => {
+                            loading.style.display = 'none';
+                            gameControls.style.display = 'flex';
+                            safariHelper.style.display = 'block';
+                            
+                            // Hide helper message after a while
+                            setTimeout(() => {
+                                safariHelper.style.display = 'none';
+                            }, 5000);
+                        }, 4000);
+                    }
+                }, 5000);
+                
+                // Method 3: Final fallback - direct iframe with minimal restrictions
+                setTimeout(function() {
+                    if (loading.style.display !== 'none') {
+                        safariContainer.innerHTML = ''; // Clear container
+                        
+                        const directIframe = document.createElement('iframe');
+                        directIframe.src = gameUrl;
+                        directIframe.width = '100%';
+                        directIframe.height = '100%';
+                        directIframe.style.border = 'none';
+                        directIframe.setAttribute('allowfullscreen', 'true');
+                        // Minimal sandbox to increase chances of working
+                        directIframe.setAttribute('sandbox', 'allow-same-origin allow-scripts allow-popups allow-forms');
+                        safariContainer.appendChild(directIframe);
+                        
+                        // Show game controls and hide loading after another delay
+                        setTimeout(() => {
+                            loading.style.display = 'none';
+                            gameControls.style.display = 'flex';
+                        }, 3000);
+                    }
+                }, 10000);
+                
+                // Safari-specific game controls
+                jumpBtn.addEventListener('click', function() {
+                    simulateKeyPress('W');
+                });
+                
+                aimBtn.addEventListener('mousedown', function() {
+                    simulateKeyDown('E');
+                });
+                
+                aimBtn.addEventListener('mouseup', function() {
+                    simulateKeyUp('E');
+                });
+                
+                shootBtn.addEventListener('click', function() {
+                    simulateKeyPress('E');
+                });
+                
+                reloadBtn.addEventListener('click', function() {
+                    // Reload the game container with a fresh URL (cache-busting)
+                    loading.style.display = 'flex';
+                    safariContainer.innerHTML = '';
+                    
+                    const refreshIframe = document.createElement('iframe');
+                    refreshIframe.src = gameUrl + '?refresh=' + Date.now();
+                    refreshIframe.width = '100%';
+                    refreshIframe.height = '100%';
+                    refreshIframe.style.border = 'none';
+                    refreshIframe.setAttribute('allowfullscreen', 'true');
+                    safariContainer.appendChild(refreshIframe);
+                    
+                    setTimeout(() => {
+                        loading.style.display = 'none';
+                    }, 5000);
+                });
+                
+                // Update hint for Safari users
+                gameHint.textContent = "Safari users: Try using the control buttons below the game if keyboard controls don't respond.";
+            } else {
+                // Standard approach for Chrome, Firefox, etc.
+                iframe.style.display = 'block';
+                
+                // Handle iframe load
+                iframe.addEventListener('load', function() {
+                    loading.style.display = 'none';
+                    iframe.focus();
+                });
+                
+                // Fallback timeout
+                setTimeout(function() {
+                    loading.style.display = 'none';
+                }, 8000);
+            }
+            
+            // Helper function to simulate key press in Safari
+            function simulateKeyPress(key) {
+                const keyDownEvent = new KeyboardEvent('keydown', {
+                    key: key,
+                    code: 'Key' + key,
+                    keyCode: key.charCodeAt(0),
+                    which: key.charCodeAt(0),
+                    bubbles: true,
+                    cancelable: true
+                });
+                
+                const keyUpEvent = new KeyboardEvent('keyup', {
+                    key: key,
+                    code: 'Key' + key,
+                    keyCode: key.charCodeAt(0),
+                    which: key.charCodeAt(0),
+                    bubbles: true,
+                    cancelable: true
+                });
+                
+                document.dispatchEvent(keyDownEvent);
+                setTimeout(() => {
+                    document.dispatchEvent(keyUpEvent);
+                }, 100);
+            }
+            
+            // Helper functions for key down/up
+            function simulateKeyDown(key) {
+                const keyDownEvent = new KeyboardEvent('keydown', {
+                    key: key,
+                    code: 'Key' + key,
+                    keyCode: key.charCodeAt(0),
+                    which: key.charCodeAt(0),
+                    bubbles: true,
+                    cancelable: true
+                });
+                document.dispatchEvent(keyDownEvent);
+            }
+            
+            function simulateKeyUp(key) {
+                const keyUpEvent = new KeyboardEvent('keyup', {
+                    key: key,
+                    code: 'Key' + key,
+                    keyCode: key.charCodeAt(0),
+                    which: key.charCodeAt(0),
+                    bubbles: true,
+                    cancelable: true
+                });
+                document.dispatchEvent(keyUpEvent);
+            }
+            
+            // Draw Mayin pattern using canvas
+            const canvas = document.getElementById('mayinCanvas');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                const canvasWidth = canvas.width;
+                const canvasHeight = canvas.height;
+                
+                // Set canvas size to match container width
+                function resizeCanvas() {
+                    const container = canvas.parentElement;
+                    const containerWidth = container.offsetWidth;
+                    canvas.width = containerWidth;
+                    canvas.height = 120; // Fixed height
+                    drawMayinPattern();
+                }
+                
+                // Draw the pattern
+                function drawMayinPattern() {
+                    // Clear canvas
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Draw background (transparent)
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Draw dot pattern
+                    const dotSize = 1;
+                    const spacing = 16; // Space between dots
+                    const startX = (canvas.width % spacing) / 2;
+                    const startY = (canvas.height % spacing) / 2;
+                    
+                    ctx.fillStyle = isDarkMode() ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 122, 255, 0.15)';
+                    
+                    // Draw regular dot pattern
+                    for (let x = startX; x < canvas.width; x += spacing) {
+                        for (let y = startY; y < canvas.height; y += spacing) {
+                            ctx.beginPath();
+                            ctx.arc(x, y, dotSize, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                    
+                    // Draw "MAYIN" text using dots
+                    const textX = canvas.width / 2 - 120; // Center text
+                    const textY = canvas.height / 2 + 10;
+                    drawDotText("MAYIN", textX, textY, spacing / 2);
+                }
+                
+                // Draw text using dots
+                function drawDotText(text, x, y, dotSpacing) {
+                    const dotSize = 1.2;
+                    ctx.fillStyle = isDarkMode() ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 122, 255, 0.3)';
+                    
+                    // Simple dot patterns for each letter
+                    const patterns = {
+                        'M': [
+                            [1,0,0,0,1],
+                            [1,1,0,1,1],
+                            [1,0,1,0,1],
+                            [1,0,0,0,1],
+                            [1,0,0,0,1]
+                        ],
+                        'A': [
+                            [0,1,1,0],
+                            [1,0,0,1],
+                            [1,1,1,1],
+                            [1,0,0,1],
+                            [1,0,0,1]
+                        ],
+                        'Y': [
+                            [1,0,0,1],
+                            [0,1,1,0],
+                            [0,0,1,0],
+                            [0,1,0,0],
+                            [1,0,0,0]
+                        ],
+                        'I': [
+                            [1,1,1],
+                            [0,1,0],
+                            [0,1,0],
+                            [0,1,0],
+                            [1,1,1]
+                        ],
+                        'N': [
+                            [1,0,0,1],
+                            [1,1,0,1],
+                            [1,0,1,1],
+                            [1,0,0,1],
+                            [1,0,0,1]
+                        ]
+                    };
+                    
+                    let currentX = x;
+                    
+                    // Draw each letter
+                    for (let i = 0; i < text.length; i++) {
+                        const letter = text[i];
+                        const pattern = patterns[letter];
+                        
+                        if (pattern) {
+                            for (let row = 0; row < pattern.length; row++) {
+                                for (let col = 0; col < pattern[row].length; col++) {
+                                    if (pattern[row][col] === 1) {
+                                        ctx.beginPath();
+                                        ctx.arc(
+                                            currentX + col * dotSpacing, 
+                                            y - (pattern.length - row) * dotSpacing, 
+                                            dotSize, 
+                                            0, 
+                                            Math.PI * 2
+                                        );
+                                        ctx.fill();
+                                    }
+                                }
+                            }
+                            
+                            // Move to the next letter position
+                            currentX += (pattern[0].length + 2) * dotSpacing;
+                        }
+                    }
+                }
+                
+                // Detect dark mode
+                function isDarkMode() {
+                    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                }
+                
+                // Initial draw
+                resizeCanvas();
+                
+                // Redraw on window resize
+                window.addEventListener('resize', resizeCanvas);
+                
+                // Redraw on dark mode change
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', drawMayinPattern);
+            }
+        });
+    </script>
+</body>
+</html>
