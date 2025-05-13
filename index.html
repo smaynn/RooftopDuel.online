@@ -64,8 +64,8 @@
             border: none;
         }
         
-        /* Error message styling */
-        .game-error-overlay {
+        /* Loading indicator */
+        .game-loading {
             position: absolute;
             top: 0;
             left: 0;
@@ -78,23 +78,22 @@
             background-color: rgba(0, 0, 0, 0.8);
             color: white;
             text-align: center;
-            padding: 20px;
-            z-index: 10;
+            z-index: 5;
         }
         
-        .game-error-overlay a {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #007AFF;
-            color: white;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: background-color 0.2s;
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #007AFF;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
         }
         
-        .game-error-overlay a:hover {
-            background-color: #0062CC;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         
         @media (max-width: 640px) {
@@ -128,16 +127,15 @@
         <section id="game" class="mb-12">
             <h2 class="text-2xl md:text-3xl font-bold mb-6 text-apple-blue dark:text-apple-teal">Play Rooftop Duel</h2>
             <div class="game-container rounded-xl overflow-hidden shadow-xl relative">
-                <div class="game-error-overlay">
-                    <h3 class="text-2xl font-bold mb-2">Game Loading Issue</h3>
-                    <p class="mb-4">We're experiencing some technical difficulties loading the game on this page.</p>
-                    <p class="mb-6">For the best experience, please click the button below to play the game directly:</p>
-                    <a href="https://cloud.onlinegames.io/games/2025/construct/213/rooftop-duel/index-og.html" target="_blank" rel="noopener noreferrer" class="inline-block">Play Rooftop Duel</a>
+                <!-- Loading indicator that will disappear when game loads -->
+                <div class="game-loading" id="gameLoading">
+                    <div class="loader"></div>
+                    <p>Loading game...</p>
                 </div>
-                <iframe src="https://cloud.onlinegames.io/games/2025/construct/213/rooftop-duel/index-og.html" allowfullscreen title="Rooftop Duel Game"></iframe>
+                <iframe src="https://cloud.onlinegames.io/games/2025/construct/213/rooftop-duel/index-og.html" allowfullscreen allow="fullscreen" sandbox="allow-same-origin allow-scripts allow-popups allow-forms" id="gameFrame" title="Rooftop Duel Game"></iframe>
             </div>
-            <div class="mt-4 p-4 bg-apple-gray-200 dark:bg-apple-gray-800 rounded-lg text-center">
-                <p>If the game doesn't load properly above, <a href="https://cloud.onlinegames.io/games/2025/construct/213/rooftop-duel/index-og.html" target="_blank" rel="noopener noreferrer" class="text-apple-blue hover:text-apple-teal font-medium">click here to play directly</a>.</p>
+            <div class="mt-4 p-4 bg-apple-gray-200 dark:bg-apple-gray-800 rounded-lg text-center" id="fallbackMessage" style="display: none;">
+                <p>If the game isn't loading properly, you can <a href="https://cloud.onlinegames.io/games/2025/construct/213/rooftop-duel/index-og.html" target="_blank" rel="noopener noreferrer" class="text-apple-blue hover:text-apple-teal font-medium">open it in a new tab</a>.</p>
             </div>
         </section>
 
@@ -299,32 +297,34 @@
     </footer>
 
     <script>
-        // JavaScript to handle iframe loading issues
         document.addEventListener('DOMContentLoaded', function() {
-            const iframe = document.querySelector('.game-container iframe');
-            const errorOverlay = document.querySelector('.game-error-overlay');
+            const iframe = document.getElementById('gameFrame');
+            const loading = document.getElementById('gameLoading');
+            const fallbackMessage = document.getElementById('fallbackMessage');
+            let loadTimeout;
             
-            // Initially hide the error overlay
-            errorOverlay.style.display = 'none';
-            
-            // Show error overlay if iframe fails to load
-            iframe.addEventListener('error', function() {
-                errorOverlay.style.display = 'flex';
+            // First approach: listen for iframe load event
+            iframe.addEventListener('load', function() {
+                // Game has loaded, hide the loading indicator
+                loading.style.display = 'none';
+                clearTimeout(loadTimeout);
             });
             
-            // Alternative approach: check if iframe content is accessible after a timeout
-            setTimeout(function() {
-                try {
-                    // Try to access iframe content - if blocked, this will throw an error
-                    const iframeContent = iframe.contentWindow || iframe.contentDocument;
-                    if (!iframeContent || !iframeContent.document) {
-                        errorOverlay.style.display = 'flex';
-                    }
-                } catch (e) {
-                    // Error accessing iframe content - likely blocked
-                    errorOverlay.style.display = 'flex';
+            // Second approach: set a timeout as a fallback
+            loadTimeout = setTimeout(function() {
+                // If loading takes too long (10 seconds), hide the loading indicator anyway
+                // This ensures the game is accessible even if the load event doesn't fire
+                loading.style.display = 'none';
+                fallbackMessage.style.display = 'block';
+            }, 10000);
+            
+            // Focus the iframe when clicking on the game container
+            const gameContainer = document.querySelector('.game-container');
+            gameContainer.addEventListener('click', function() {
+                if (loading.style.display === 'none') {
+                    iframe.focus();
                 }
-            }, 3000); // Check after 3 seconds
+            });
         });
     </script>
 </body>
