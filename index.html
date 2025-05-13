@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+<!DOCTYPE html>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rooftop Duel - Ragdoll Physics Shooter Game | rooftopduel.online</title>
@@ -62,6 +64,39 @@
             border: none;
         }
         
+        /* Error message styling */
+        .game-error-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            z-index: 10;
+        }
+        
+        .game-error-overlay a {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007AFF;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        
+        .game-error-overlay a:hover {
+            background-color: #0062CC;
+        }
+        
         @media (max-width: 640px) {
             .game-container {
                 padding-bottom: 75%; /* Adjust aspect ratio for mobile */
@@ -92,8 +127,17 @@
     <main class="container mx-auto max-w-6xl px-4 md:px-8 py-8">
         <section id="game" class="mb-12">
             <h2 class="text-2xl md:text-3xl font-bold mb-6 text-apple-blue dark:text-apple-teal">Play Rooftop Duel</h2>
-            <div class="game-container rounded-xl overflow-hidden shadow-xl">
-                <iframe src="https://cloud.onlinegames.io/games/2025/construct/213/rooftop-duel/index-og.html" allowfullscreen="" title="Rooftop Duel Game"></iframe>
+            <div class="game-container rounded-xl overflow-hidden shadow-xl relative">
+                <div class="game-error-overlay">
+                    <h3 class="text-2xl font-bold mb-2">Game Loading Issue</h3>
+                    <p class="mb-4">We're experiencing some technical difficulties loading the game on this page.</p>
+                    <p class="mb-6">For the best experience, please click the button below to play the game directly:</p>
+                    <a href="https://cloud.onlinegames.io/games/2025/construct/213/rooftop-duel/index-og.html" target="_blank" rel="noopener noreferrer" class="inline-block">Play Rooftop Duel</a>
+                </div>
+                <iframe src="https://cloud.onlinegames.io/games/2025/construct/213/rooftop-duel/index-og.html" allowfullscreen title="Rooftop Duel Game"></iframe>
+            </div>
+            <div class="mt-4 p-4 bg-apple-gray-200 dark:bg-apple-gray-800 rounded-lg text-center">
+                <p>If the game doesn't load properly above, <a href="https://cloud.onlinegames.io/games/2025/construct/213/rooftop-duel/index-og.html" target="_blank" rel="noopener noreferrer" class="text-apple-blue hover:text-apple-teal font-medium">click here to play directly</a>.</p>
             </div>
         </section>
 
@@ -200,7 +244,7 @@
         </section>
 
         <section id="tips" class="mb-12">
-            <h2 class="text-2xl md:text-3xl font-bold mb-6 text-apple-blue dark:text-apple-teal">Pro Tips &amp; Strategies</h2>
+            <h2 class="text-2xl md:text-3xl font-bold mb-6 text-apple-blue dark:text-apple-teal">Pro Tips & Strategies</h2>
             <div class="bg-white dark:bg-apple-gray-900 rounded-xl p-6 shadow-md">
                 <div class="space-y-6">
                     <div>
@@ -249,10 +293,39 @@
                 </div>
             </div>
             <div class="mt-10 pt-6 border-t border-apple-gray-800 text-center text-apple-gray-500">
-                <p>© 2025 rooftopduel.online. All rights reserved. Rooftop Duel is a trademark of its respective owner.</p>
+                <p>&copy; 2025 rooftopduel.online. All rights reserved. Rooftop Duel is a trademark of its respective owner.</p>
             </div>
         </div>
     </footer>
 
-
-</body></html>
+    <script>
+        // JavaScript to handle iframe loading issues
+        document.addEventListener('DOMContentLoaded', function() {
+            const iframe = document.querySelector('.game-container iframe');
+            const errorOverlay = document.querySelector('.game-error-overlay');
+            
+            // Initially hide the error overlay
+            errorOverlay.style.display = 'none';
+            
+            // Show error overlay if iframe fails to load
+            iframe.addEventListener('error', function() {
+                errorOverlay.style.display = 'flex';
+            });
+            
+            // Alternative approach: check if iframe content is accessible after a timeout
+            setTimeout(function() {
+                try {
+                    // Try to access iframe content - if blocked, this will throw an error
+                    const iframeContent = iframe.contentWindow || iframe.contentDocument;
+                    if (!iframeContent || !iframeContent.document) {
+                        errorOverlay.style.display = 'flex';
+                    }
+                } catch (e) {
+                    // Error accessing iframe content - likely blocked
+                    errorOverlay.style.display = 'flex';
+                }
+            }, 3000); // Check after 3 seconds
+        });
+    </script>
+</body>
+</html>
