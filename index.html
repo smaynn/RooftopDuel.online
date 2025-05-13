@@ -56,7 +56,10 @@
             background-color: #000;
         }
         
-        .game-container iframe {
+        .game-container iframe,
+        .game-container object,
+        .game-container embed,
+        .safari-container {
             position: absolute;
             top: 0;
             left: 0;
@@ -91,30 +94,37 @@
             animation: spin 1s linear infinite;
             margin-bottom: 20px;
         }
-        
-        /* Safari fix notification */
-        .safari-fix {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 15px;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            text-align: center;
-            z-index: 4;
-            font-size: 14px;
-            display: none;
+
+        /* Safari container */
+        .safari-container {
+            z-index: 1;
+            display: none; /* Hidden by default, shown for Safari */
+            overflow: hidden;
+            background-color: #000;
         }
         
-        .safari-fix button {
-            margin-left: 10px;
-            padding: 5px 10px;
+        /* Game controls overlay */
+        .game-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            z-index: 4;
+        }
+        
+        .game-controls button {
+            margin: 0 5px;
+            padding: 8px 16px;
             background-color: #007AFF;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            font-size: 14px;
         }
         
         @keyframes spin {
@@ -122,39 +132,30 @@
             100% { transform: rotate(360deg); }
         }
         
-        /* Direct game container (for Safari fallback) */
-        .direct-game {
-            display: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #000;
-        }
-        
-        /* Overlay click area for Safari */
-        .click-to-interact {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            text-align: center;
-            z-index: 6;
-            cursor: pointer;
-        }
-        
         @media (max-width: 640px) {
             .game-container {
                 padding-bottom: 75%; /* Adjust aspect ratio for mobile */
             }
+        }
+
+        /* Safari-specific help message */
+        .safari-helper {
+            position: absolute;
+            top: 10px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            z-index: 6;
+            display: none;
+        }
+        
+        .safari-helper .message {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -163,7 +164,7 @@
         <div class="container mx-auto max-w-6xl">
             <div class="flex flex-col md:flex-row justify-between items-center">
                 <div>
-                    <h1 class="text-3xl md:text-4xl font-bold tracking-tight">Rooftop Duel</h1>
+                    <h1 class="text-3xl md:text-4xl font-bold tracking-tight">Rooftop Duel-马寅的第一个游戏站</h1>
                     <p class="mt-2 text-lg md:text-xl font-light">Can you handle a rooftop shoot-out with gravity, ragdoll limbs, and a toybox of overpowered weapons?</p>
                 </div>
                 <nav class="mt-4 md:mt-0">
@@ -188,38 +189,41 @@
                     <p>Loading game...</p>
                 </div>
                 
-                <!-- Safari fix notification -->
-                <div class="safari-fix" id="safariFix">
-                    Click the game area to activate controls. If game doesn't respond, 
-                    <button id="refreshGameBtn">Refresh Game</button>
+                <!-- Safari helper message -->
+                <div class="safari-helper" id="safariHelper">
+                    <div class="message">
+                        Game loaded! Click or press any key to focus.
+                    </div>
                 </div>
                 
-                <!-- Click to interact overlay (mostly for Safari) -->
-                <div class="click-to-interact" id="clickToInteract">
-                    <div class="text-3xl mb-4">👆</div>
-                    <p class="text-xl font-semibold">Click to Start Playing</p>
-                    <p class="mt-2 text-sm opacity-80">Game controls will activate when you click</p>
-                </div>
-                
-                <!-- Primary game iframe -->
+                <!-- Standard iframe (for Chrome, Firefox, etc.) -->
                 <iframe 
+                    id="gameFrame" 
                     src="https://cloud.onlinegames.io/games/2025/construct/213/rooftop-duel/index-og.html" 
                     allowfullscreen="true"
                     allow="fullscreen; autoplay; clipboard-write" 
-                    referrerpolicy="no-referrer-when-downgrade"
+                    sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-downloads"
                     frameborder="0"
-                    scrolling="no"
-                    sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-downloads allow-modals allow-presentation"
                     loading="eager"
-                    id="gameFrame" 
-                    title="Rooftop Duel Game">
+                    title="Rooftop Duel Game"
+                    style="display:none;">
                 </iframe>
                 
-                <!-- Direct game embed (alternative method for Safari) -->
-                <div class="direct-game" id="directGame"></div>
+                <!-- Safari-specific container -->
+                <div class="safari-container" id="safariContainer">
+                    <!-- Will be populated via JavaScript for Safari -->
+                </div>
+                
+                <!-- Game controls (mainly for Safari) -->
+                <div class="game-controls" id="gameControls">
+                    <button id="jumpBtn">Jump (W)</button>
+                    <button id="aimBtn">Aim (E)</button>
+                    <button id="shootBtn">Shoot</button>
+                    <button id="reloadBtn">Reload Game</button>
+                </div>
             </div>
             <div class="mt-2 p-2 bg-apple-gray-200 dark:bg-apple-gray-800 rounded-lg text-center text-sm">
-                <p id="gameHint">Click the game area to activate controls if the game doesn't respond.</p>
+                <p id="gameHint">Press W to jump, hold E to aim, and release to shoot.</p>
             </div>
         </section>
 
@@ -385,11 +389,14 @@
             // Elements
             const iframe = document.getElementById('gameFrame');
             const loading = document.getElementById('gameLoading');
-            const safariFix = document.getElementById('safariFix');
-            const clickToInteract = document.getElementById('clickToInteract');
-            const directGame = document.getElementById('directGame');
-            const refreshGameBtn = document.getElementById('refreshGameBtn');
+            const safariContainer = document.getElementById('safariContainer');
+            const gameControls = document.getElementById('gameControls');
             const gameHint = document.getElementById('gameHint');
+            const safariHelper = document.getElementById('safariHelper');
+            const jumpBtn = document.getElementById('jumpBtn');
+            const aimBtn = document.getElementById('aimBtn');
+            const shootBtn = document.getElementById('shootBtn');
+            const reloadBtn = document.getElementById('reloadBtn');
             
             // Game URL
             const gameUrl = 'https://cloud.onlinegames.io/games/2025/construct/213/rooftop-duel/index-og.html';
@@ -398,77 +405,173 @@
             const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
             const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
             
-            // For all browsers: handle iframe load
-            iframe.addEventListener('load', function() {
-                // Hide loading indicator when game loads
-                loading.style.display = 'none';
-                
-                if (isSafari) {
-                    // In Safari, we need an extra click to activate the game
-                    clickToInteract.style.display = 'flex';
-                    safariFix.style.display = 'block';
-                    
-                    // Set a hint message for Safari users
-                    gameHint.textContent = "Safari users: Click the game area once to activate controls.";
-                }
-            });
-            
-            // Safari-specific "click to interact" handler
-            clickToInteract.addEventListener('click', function() {
-                clickToInteract.style.display = 'none';
-                // Try to focus the iframe
-                iframe.focus();
-                // Additional Safari-specific fixes could go here
-            });
-            
-            // Refresh game button (for Safari)
-            refreshGameBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Reload the iframe with the game
-                iframe.src = gameUrl + '?refresh=' + Date.now();
-                
-                // Show loading indicator again
-                loading.style.display = 'flex';
-                
-                // Hide other UI elements
-                safariFix.style.display = 'none';
-                clickToInteract.style.display = 'none';
-            });
-            
-            // Alternative load approach for Safari
+            // Safari-specific solutions
             if (isSafari) {
-                // Enhanced Safari-specific attributes
-                iframe.setAttribute('webkit-playsinline', 'true');
-                iframe.setAttribute('playsinline', 'true');
+                // Hide standard iframe, show Safari container
+                iframe.style.display = 'none';
+                safariContainer.style.display = 'block';
                 
-                // Try to focus the iframe when interacting with the container
-                const gameContainer = document.querySelector('.game-container');
-                gameContainer.addEventListener('click', function() {
-                    if (loading.style.display === 'none') {
-                        iframe.focus();
-                    }
-                });
+                // Method 1: Try object tag
+                const objectEmbed = document.createElement('object');
+                objectEmbed.data = gameUrl;
+                objectEmbed.type = 'text/html';
+                objectEmbed.width = '100%';
+                objectEmbed.height = '100%';
+                objectEmbed.setAttribute('id', 'gameObject');
+                safariContainer.appendChild(objectEmbed);
                 
-                // Fallback timeout specifically for Safari
+                // Method 2: Backup with embed tag if object fails
                 setTimeout(function() {
                     if (loading.style.display !== 'none') {
-                        loading.style.display = 'none';
-                        clickToInteract.style.display = 'flex';
-                        safariFix.style.display = 'block';
+                        safariContainer.innerHTML = ''; // Clear container
+                        
+                        const embedTag = document.createElement('embed');
+                        embedTag.src = gameUrl;
+                        embedTag.type = 'text/html';
+                        embedTag.width = '100%';
+                        embedTag.height = '100%';
+                        embedTag.setAttribute('id', 'gameEmbed');
+                        safariContainer.appendChild(embedTag);
+                        
+                        // Show game controls for Safari
+                        setTimeout(() => {
+                            loading.style.display = 'none';
+                            gameControls.style.display = 'flex';
+                            safariHelper.style.display = 'block';
+                            
+                            // Hide helper message after a while
+                            setTimeout(() => {
+                                safariHelper.style.display = 'none';
+                            }, 5000);
+                        }, 4000);
                     }
-                }, 8000);
+                }, 5000);
+                
+                // Method 3: Final fallback - direct iframe with minimal restrictions
+                setTimeout(function() {
+                    if (loading.style.display !== 'none') {
+                        safariContainer.innerHTML = ''; // Clear container
+                        
+                        const directIframe = document.createElement('iframe');
+                        directIframe.src = gameUrl;
+                        directIframe.width = '100%';
+                        directIframe.height = '100%';
+                        directIframe.style.border = 'none';
+                        directIframe.setAttribute('allowfullscreen', 'true');
+                        // Minimal sandbox to increase chances of working
+                        directIframe.setAttribute('sandbox', 'allow-same-origin allow-scripts allow-popups allow-forms');
+                        safariContainer.appendChild(directIframe);
+                        
+                        // Show game controls and hide loading after another delay
+                        setTimeout(() => {
+                            loading.style.display = 'none';
+                            gameControls.style.display = 'flex';
+                        }, 3000);
+                    }
+                }, 10000);
+                
+                // Safari-specific game controls
+                jumpBtn.addEventListener('click', function() {
+                    simulateKeyPress('W');
+                });
+                
+                aimBtn.addEventListener('mousedown', function() {
+                    simulateKeyDown('E');
+                });
+                
+                aimBtn.addEventListener('mouseup', function() {
+                    simulateKeyUp('E');
+                });
+                
+                shootBtn.addEventListener('click', function() {
+                    simulateKeyPress('E');
+                });
+                
+                reloadBtn.addEventListener('click', function() {
+                    // Reload the game container with a fresh URL (cache-busting)
+                    loading.style.display = 'flex';
+                    safariContainer.innerHTML = '';
+                    
+                    const refreshIframe = document.createElement('iframe');
+                    refreshIframe.src = gameUrl + '?refresh=' + Date.now();
+                    refreshIframe.width = '100%';
+                    refreshIframe.height = '100%';
+                    refreshIframe.style.border = 'none';
+                    refreshIframe.setAttribute('allowfullscreen', 'true');
+                    safariContainer.appendChild(refreshIframe);
+                    
+                    setTimeout(() => {
+                        loading.style.display = 'none';
+                    }, 5000);
+                });
+                
+                // Update hint for Safari users
+                gameHint.textContent = "Safari users: Try using the control buttons below the game if keyboard controls don't respond.";
             } else {
-                // Standard fallback for other browsers
+                // Standard approach for Chrome, Firefox, etc.
+                iframe.style.display = 'block';
+                
+                // Handle iframe load
+                iframe.addEventListener('load', function() {
+                    loading.style.display = 'none';
+                    iframe.focus();
+                });
+                
+                // Fallback timeout
                 setTimeout(function() {
                     loading.style.display = 'none';
                 }, 8000);
             }
             
-            // For iOS devices, show a different hint
-            if (isiOS) {
-                gameHint.textContent = "iOS users: Tap the game area to activate controls. For best experience, rotate to landscape mode.";
+            // Helper function to simulate key press in Safari
+            function simulateKeyPress(key) {
+                const keyDownEvent = new KeyboardEvent('keydown', {
+                    key: key,
+                    code: 'Key' + key,
+                    keyCode: key.charCodeAt(0),
+                    which: key.charCodeAt(0),
+                    bubbles: true,
+                    cancelable: true
+                });
+                
+                const keyUpEvent = new KeyboardEvent('keyup', {
+                    key: key,
+                    code: 'Key' + key,
+                    keyCode: key.charCodeAt(0),
+                    which: key.charCodeAt(0),
+                    bubbles: true,
+                    cancelable: true
+                });
+                
+                document.dispatchEvent(keyDownEvent);
+                setTimeout(() => {
+                    document.dispatchEvent(keyUpEvent);
+                }, 100);
+            }
+            
+            // Helper functions for key down/up
+            function simulateKeyDown(key) {
+                const keyDownEvent = new KeyboardEvent('keydown', {
+                    key: key,
+                    code: 'Key' + key,
+                    keyCode: key.charCodeAt(0),
+                    which: key.charCodeAt(0),
+                    bubbles: true,
+                    cancelable: true
+                });
+                document.dispatchEvent(keyDownEvent);
+            }
+            
+            function simulateKeyUp(key) {
+                const keyUpEvent = new KeyboardEvent('keyup', {
+                    key: key,
+                    code: 'Key' + key,
+                    keyCode: key.charCodeAt(0),
+                    which: key.charCodeAt(0),
+                    bubbles: true,
+                    cancelable: true
+                });
+                document.dispatchEvent(keyUpEvent);
             }
         });
     </script>
