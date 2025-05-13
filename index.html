@@ -157,6 +157,39 @@
             border-radius: 20px;
             font-size: 14px;
         }
+        
+        /* Mayin dot pattern styles */
+        .mayin-pattern {
+            position: relative;
+            overflow: hidden;
+            padding-top: 40px;
+            padding-bottom: 20px;
+        }
+        
+        .mayin-pattern::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: radial-gradient(circle, rgba(0, 122, 255, 0.15) 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0.4;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        .mayin-text {
+            position: relative;
+            text-align: center;
+            font-weight: 300;
+            color: rgba(142, 142, 147, 0.7);
+            letter-spacing: 1px;
+            font-size: 14px;
+            margin-top: 20px;
+            z-index: 1;
+        }
     </style>
 </head>
 <body class="bg-apple-gray-100 dark:bg-apple-gray-950 text-apple-gray-900 dark:text-white">
@@ -353,6 +386,14 @@
             </div>
         </section>
     </main>
+
+    <!-- Mayin pattern section before the footer -->
+    <div class="mayin-pattern">
+        <div class="container mx-auto max-w-6xl px-4 md:px-8 relative">
+            <canvas id="mayinCanvas" width="1000" height="120"></canvas>
+            <div class="mayin-text">Designed by Mayin</div>
+        </div>
+    </div>
 
     <footer class="bg-apple-gray-900 text-white py-10 px-4 md:px-8">
         <div class="container mx-auto max-w-6xl">
@@ -572,6 +613,143 @@
                     cancelable: true
                 });
                 document.dispatchEvent(keyUpEvent);
+            }
+            
+            // Draw Mayin pattern using canvas
+            const canvas = document.getElementById('mayinCanvas');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                const canvasWidth = canvas.width;
+                const canvasHeight = canvas.height;
+                
+                // Set canvas size to match container width
+                function resizeCanvas() {
+                    const container = canvas.parentElement;
+                    const containerWidth = container.offsetWidth;
+                    canvas.width = containerWidth;
+                    canvas.height = 120; // Fixed height
+                    drawMayinPattern();
+                }
+                
+                // Draw the pattern
+                function drawMayinPattern() {
+                    // Clear canvas
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Draw background (transparent)
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Draw dot pattern
+                    const dotSize = 1;
+                    const spacing = 16; // Space between dots
+                    const startX = (canvas.width % spacing) / 2;
+                    const startY = (canvas.height % spacing) / 2;
+                    
+                    ctx.fillStyle = isDarkMode() ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 122, 255, 0.15)';
+                    
+                    // Draw regular dot pattern
+                    for (let x = startX; x < canvas.width; x += spacing) {
+                        for (let y = startY; y < canvas.height; y += spacing) {
+                            ctx.beginPath();
+                            ctx.arc(x, y, dotSize, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                    
+                    // Draw "MAYIN" text using dots
+                    const textX = canvas.width / 2 - 120; // Center text
+                    const textY = canvas.height / 2 + 10;
+                    drawDotText("MAYIN", textX, textY, spacing / 2);
+                }
+                
+                // Draw text using dots
+                function drawDotText(text, x, y, dotSpacing) {
+                    const dotSize = 1.2;
+                    ctx.fillStyle = isDarkMode() ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 122, 255, 0.3)';
+                    
+                    // Simple dot patterns for each letter
+                    const patterns = {
+                        'M': [
+                            [1,0,0,0,1],
+                            [1,1,0,1,1],
+                            [1,0,1,0,1],
+                            [1,0,0,0,1],
+                            [1,0,0,0,1]
+                        ],
+                        'A': [
+                            [0,1,1,0],
+                            [1,0,0,1],
+                            [1,1,1,1],
+                            [1,0,0,1],
+                            [1,0,0,1]
+                        ],
+                        'Y': [
+                            [1,0,0,1],
+                            [0,1,1,0],
+                            [0,0,1,0],
+                            [0,1,0,0],
+                            [1,0,0,0]
+                        ],
+                        'I': [
+                            [1,1,1],
+                            [0,1,0],
+                            [0,1,0],
+                            [0,1,0],
+                            [1,1,1]
+                        ],
+                        'N': [
+                            [1,0,0,1],
+                            [1,1,0,1],
+                            [1,0,1,1],
+                            [1,0,0,1],
+                            [1,0,0,1]
+                        ]
+                    };
+                    
+                    let currentX = x;
+                    
+                    // Draw each letter
+                    for (let i = 0; i < text.length; i++) {
+                        const letter = text[i];
+                        const pattern = patterns[letter];
+                        
+                        if (pattern) {
+                            for (let row = 0; row < pattern.length; row++) {
+                                for (let col = 0; col < pattern[row].length; col++) {
+                                    if (pattern[row][col] === 1) {
+                                        ctx.beginPath();
+                                        ctx.arc(
+                                            currentX + col * dotSpacing, 
+                                            y - (pattern.length - row) * dotSpacing, 
+                                            dotSize, 
+                                            0, 
+                                            Math.PI * 2
+                                        );
+                                        ctx.fill();
+                                    }
+                                }
+                            }
+                            
+                            // Move to the next letter position
+                            currentX += (pattern[0].length + 2) * dotSpacing;
+                        }
+                    }
+                }
+                
+                // Detect dark mode
+                function isDarkMode() {
+                    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                }
+                
+                // Initial draw
+                resizeCanvas();
+                
+                // Redraw on window resize
+                window.addEventListener('resize', resizeCanvas);
+                
+                // Redraw on dark mode change
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', drawMayinPattern);
             }
         });
     </script>
